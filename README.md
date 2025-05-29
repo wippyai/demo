@@ -6,76 +6,15 @@
         </picture>
     </a>
 </p>
-<h1 align="center">{Package Name}</h1>
+<h1 align="center">App</h1>
 <div align="center">
 
-[![Latest Release](https://img.shields.io/github/v/release/wippyai/{repo}?style=flat-square)][releases-page]
-[![License](https://img.shields.io/github/license/wippyai/{repo}?style=flat-square)](LICENSE)
-![Downloads](https://img.shields.io/github/downloads/wippyai/{repo}/total?style=flat-square)
+[![License](https://img.shields.io/github/license/wippyai/app?style=flat-square)](LICENSE)
 [![Documentation](https://img.shields.io/badge/documentation-online-brightgreen.svg?style=flat-square)][documentation]
 
 </div>
 
-{description}
-
----
-
-## TODO
-
-- Replace all `{repo}` with the actual repository name.
-- Replace all `{Package Name}` with the actual package name.
-- Replace the `{description}` with the actual package description.
-- Fill the `.github/CODEOWNERS` with the actual owners.
-  - Configure access to the repository for the owners in https://github.com/wippyai/{repo}/settings/access
-- Check that the `LICENSE.md` file is present and contains the correct license information.
-- Customize the `CONTRIBUTING.md` file with the actual contribution guidelines or remove it if not needed.
-- Fill the blocks below with the actual information or remove them if not needed.
-
-
-## Quick start
-
-### Installation
-
-Install the package using `go get`:
-
-```bash
-go get github.com/wippyai/{repo}
-```
-
-### Configuration
-
-[//]: # (Describe configuration options if applicable)
-
-### Basic usage
-
-[//]: # (Describe the basic usage of the package here)
-
-For more advanced usage scenarios, check the [documentation][documentation].
-
-
-## Development
-
-### Requirements
-
-- Go 1.18+
-- [Other dependencies]
-
-### Setup Development Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/wippyai/{repo}.git
-cd {repo}
-
-# Install dependencies
-go mod tidy
-
-# Build the project
-go build
-
-# Testing
-go test
-```
+Start your own Wippy instance with this repository.
 
 [documentation]: https://docs.wippy.ai
-[releases-page]: https://github.com/wippyai/{repo}/releases
+[releases-page]: https://github.com/wippyai/app/releases
