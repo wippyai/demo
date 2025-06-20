@@ -1,0 +1,147 @@
+version: "1.0"
+namespace: app
+
+entries:
+  ###########################
+  #   Dependency entries    #
+  ###########################
+
+  - name: __dependency.wippy.actor
+    kind: "dependency.component"
+    meta:
+      description: "Actor component"
+    component: "wippy/actor"
+    version: ">=v0.0.7"
+
+  # - name: __dependency.wippy.agent
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Agent component"
+  #   component: "wippy/agent"
+  #   version: ">=v0.0.7"
+  #
+  # - name: __dependency.wippy.bootloader
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Bootloader component"
+  #   component: "wippy/bootloader"
+  #   version: ">=v0.0.7"
+  #
+  # - name: __dependency.wippy.llm
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "LLM component"
+  #   component: "wippy/llm"
+  #   version: ">=v0.0.7"
+  #
+  # - name: __dependency.wippy.migration
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Migration component"
+  #   component: "wippy/migration"
+  #   version: ">=v0.0.7"
+  #
+  # - name: __dependency.wippy.relay
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Relay component"
+  #   component: "wippy/relay"
+  #   version: ">=v0.0.7"
+  #   values:
+  #     - name: "application_host"
+  #       value: "app:processes"
+  #
+  # - name: __dependency.wippy.security
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Security component"
+  #   component: "wippy/security"
+  #   version: ">=v0.0.7"
+
+  - name: __dependency.wippy.terminal
+    kind: "dependency.component"
+    meta:
+      description: "Terminal component"
+    component: "wippy/terminal"
+    version: ">=v0.0.7"
+
+  - name: __dependency.wippy.test
+    kind: "dependency.component"
+    meta:
+      description: "Testing component"
+    component: "wippy/test"
+    version: ">=v0.0.7"
+
+  # - name: __dependency.wippy.usage
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Usage component"
+  #   component: "wippy/usage"
+  #   version: ">=v0.0.7"
+  #
+  # - name: __dependency.wippy.views
+  #   kind: "dependency.component"
+  #   meta:
+  #     description: "Views component"
+  #   component: "wippy/views"
+  #   version: ">=v0.0.7"
+
+
+
+  # ###########################
+  # #   Application entries   #
+  # ###########################
+
+  # # app:api
+  # - name: api
+  #   kind: http.router
+  #   meta:
+  #     comment: "API router for v1 endpoints"
+  #     server: gateway
+  #     depends_on:
+  #       - gateway
+  #       - heap
+  #   prefix: /api/v1
+  #   timeouts:
+  #     request: 30s
+  #   middleware:
+  #     - cors
+  #     - websocket_relay
+
+  # app:terminal
+  - name: terminal
+    kind: terminal.host
+    meta:
+      comment: "System terminal host"
+    hide_logs: false
+    lifecycle:
+      auto_start: true
+      restart:
+        initial_delay: 5s
+        max_attempts: 3
+        backoff_factor: 1.5
+
+  # # app:processes
+  # - name: processes
+  #   kind: process.host
+  #   meta:
+  #     comment: "Process execution host"
+  #   host:
+  #     workers: 32
+  #     max_processes: 20000
+  #   lifecycle:
+  #     auto_start: true
+  #     restart:qq
+  #       initial_delay: 5s
+  #       max_attempts: 3
+  #       backoff_factor: 1.5
+
+  # app:db
+  # - name: db
+  #   kind: db.sql.sqlite
+  #   meta:
+  #     comment: "Application SQLite database"
+  #   file: "./app/data/app.db"
+  #   lifecycle:
+  #     auto_start: true
+

@@ -7,6 +7,7 @@
 # Dependency directories
 /node_modules
 /vendor
+/.wippy
 
 # Binaries for programs and plugins
 *.exe

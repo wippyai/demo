@@ -6,7 +6,7 @@
         </picture>
     </a>
 </p>
-<h1 align="center">App</h1>
+<h1 align="center">Demo application</h1>
 <div align="center">
 
 [![License](https://img.shields.io/github/license/wippyai/app?style=flat-square)](LICENSE)
@@ -14,7 +14,7 @@
 
 </div>
 
-Start your own Wippy instance with this repository.
+See Wippy in action with our demo application.
 
 [documentation]: https://docs.wippy.ai
 [releases-page]: https://github.com/wippyai/app/releases
