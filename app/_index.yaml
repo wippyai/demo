@@ -7,42 +7,45 @@ entries:
   ###########################
 
   - name: __dependency.wippy.actor
-    kind: "dependency.component"
+    kind: "ns.dependency"
     meta:
       description: "Actor component"
     component: "wippy/actor"
-    version: ">=v0.0.7"
+    version: ">=v0.0.8"
 
   # - name: __dependency.wippy.agent
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Agent component"
   #   component: "wippy/agent"
   #   version: ">=v0.0.7"
   #
   # - name: __dependency.wippy.bootloader
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Bootloader component"
   #   component: "wippy/bootloader"
   #   version: ">=v0.0.7"
-  #
-  # - name: __dependency.wippy.llm
-  #   kind: "dependency.component"
-  #   meta:
-  #     description: "LLM component"
-  #   component: "wippy/llm"
-  #   version: ">=v0.0.7"
-  #
+
+  - name: __dependency.wippy.llm
+    kind: "ns.dependency"
+    meta:
+      description: "LLM component"
+    component: "wippy/llm"
+    version: ">=v0.0.7"
+    parameters:
+      - name: "application_host"
+        value: "app:processes"
+
   # - name: __dependency.wippy.migration
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Migration component"
   #   component: "wippy/migration"
   #   version: ">=v0.0.7"
-  #
+
   # - name: __dependency.wippy.relay
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Relay component"
   #   component: "wippy/relay"
@@ -50,37 +53,37 @@ entries:
   #   values:
   #     - name: "application_host"
   #       value: "app:processes"
-  #
+
   # - name: __dependency.wippy.security
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Security component"
   #   component: "wippy/security"
   #   version: ">=v0.0.7"
 
   - name: __dependency.wippy.terminal
-    kind: "dependency.component"
+    kind: "ns.dependency"
     meta:
       description: "Terminal component"
     component: "wippy/terminal"
     version: ">=v0.0.7"
 
   - name: __dependency.wippy.test
-    kind: "dependency.component"
+    kind: "ns.dependency"
     meta:
       description: "Testing component"
     component: "wippy/test"
     version: ">=v0.0.7"
 
   # - name: __dependency.wippy.usage
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Usage component"
   #   component: "wippy/usage"
   #   version: ">=v0.0.7"
   #
   # - name: __dependency.wippy.views
-  #   kind: "dependency.component"
+  #   kind: "ns.dependency"
   #   meta:
   #     description: "Views component"
   #   component: "wippy/views"
@@ -92,21 +95,38 @@ entries:
   # #   Application entries   #
   # ###########################
 
-  # # app:api
-  # - name: api
-  #   kind: http.router
-  #   meta:
-  #     comment: "API router for v1 endpoints"
-  #     server: gateway
-  #     depends_on:
-  #       - gateway
-  #       - heap
-  #   prefix: /api/v1
-  #   timeouts:
-  #     request: 30s
-  #   middleware:
-  #     - cors
-  #     - websocket_relay
+  # app:gateway
+  - name: gateway
+    kind: http.service
+    meta:
+      comment: "Main HTTP gateway service"
+    addr: ":8082"
+    timeouts:
+      idle: 60s
+      read: 30s
+      write: 30s
+    lifecycle:
+      auto_start: true
+      restart:
+        initial_delay: 5s
+        max_attempts: 3
+        backoff_factor: 1.5
+
+  # app:api
+  - name: api
+    kind: http.router
+    meta:
+      comment: "API router for v1 endpoints"
+      server: gateway
+      depends_on:
+        - gateway
+        - heap
+    prefix: /api/v1
+    timeouts:
+      request: 30s
+    # middleware:
+    #   - cors
+    #   - websocket_relay
 
   # app:terminal
   - name: terminal
@@ -121,27 +141,42 @@ entries:
         max_attempts: 3
         backoff_factor: 1.5
 
-  # # app:processes
-  # - name: processes
-  #   kind: process.host
-  #   meta:
-  #     comment: "Process execution host"
-  #   host:
-  #     workers: 32
-  #     max_processes: 20000
-  #   lifecycle:
-  #     auto_start: true
-  #     restart:qq
-  #       initial_delay: 5s
-  #       max_attempts: 3
-  #       backoff_factor: 1.5
+  # app:processes
+  - name: processes
+    kind: process.host
+    meta:
+      comment: "Process execution host"
+    host:
+      workers: 32
+      max_processes: 20000
+    lifecycle:
+      auto_start: true
+      restart:
+        initial_delay: 5s
+        max_attempts: 3
+        backoff_factor: 1.5
 
-  # app:db
+  # # app:db
   # - name: db
   #   kind: db.sql.sqlite
   #   meta:
   #     comment: "Application SQLite database"
-  #   file: "./app/data/app.db"
+  #   file: "./data/app.db"
   #   lifecycle:
   #     auto_start: true
+  #
+  # # app:envmemory
+  # - name: envmemory
+  #   kind: env.storagememory
+  #   meta:
+  #     type: envstorage
+  #     comment: Memory storage for environment variables
+  #
+  # # app:envfile
+  # - name: envfile
+  #   kind: env.storagefile
+  #   meta:
+  #     type: envstorage
+  #     comment: Memory storage for environment variables
+  #   file_path: "./app/env/.env.sample"
 

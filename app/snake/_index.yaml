@@ -2,15 +2,15 @@ version: "1.0"
 namespace: app.snake
 
 entries:
-  - name: game
-    kind: btea.app.lua
-    meta:
-      comment: "Snake game"
-    source: file://snake.lua
-    method: App
-    modules: [ time ]
-    imports:
-      "bapp": "wippy.terminal:bapp"
+  # - name: game
+  #   kind: btea.app.lua
+  #   meta:
+  #     comment: "Snake game"
+  #   source: file://snake.lua
+  #   method: App
+  #   modules: [ time ]
+  #   imports:
+  #     "bapp": "wippy.terminal:bapp"
 
   - name: game.service
     kind: process.service
