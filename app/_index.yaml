@@ -37,6 +37,14 @@ entries:
       - name: "application_host"
         value: "app:processes"
 
+  # vertex definition
+  - name: application_host
+    # target: wippy.llm.google.vertex:client
+    kind: "ns.definition"
+    targets:
+      - entry: __dependency.wippy.llm
+        path: .parameters[] | select(.name == "application_host") | .value
+
   # - name: __dependency.wippy.migration
   #   kind: "ns.dependency"
   #   meta:

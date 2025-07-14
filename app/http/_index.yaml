@@ -2,7 +2,7 @@ version: "1.0"
 namespace: app.http.handlers
 
 meta:
-  depends_on: [ ns:system ]
+  depends_on: [ ns:app ]
   router: app:api
 
 entries:
