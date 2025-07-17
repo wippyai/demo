@@ -3,7 +3,6 @@ namespace: app.service.chat
 
 meta:
   depends_on: [ ns:app, ns:wippy.actor ]
-  router: app:api
 
 entries:
   - name: session_manager.service

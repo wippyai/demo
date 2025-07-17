@@ -1,16 +1,19 @@
 version: "1.0"
 namespace: app.snake
 
+meta:
+  depends_on: [ ns:app ]
+
 entries:
-  # - name: game
-  #   kind: btea.app.lua
-  #   meta:
-  #     comment: "Snake game"
-  #   source: file://snake.lua
-  #   method: App
-  #   modules: [ time ]
-  #   imports:
-  #     "bapp": "wippy.terminal:bapp"
+  - name: game
+    kind: btea.app.lua
+    meta:
+      comment: "Snake game"
+    source: file://snake.lua
+    method: App
+    modules: [ time, btea, channel, upstream ]
+    imports:
+      bapp: "app:bapp"
 
   - name: game.service
     kind: process.service
