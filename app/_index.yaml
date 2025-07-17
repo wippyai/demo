@@ -13,95 +13,77 @@ entries:
     component: "wippy/actor"
     version: ">=v0.0.8"
 
-  # - name: __dependency.wippy.agent
+  # Temporarily disabled due to token_refresh.service host configuration issue
+  # - name: __dependency.wippy.llm
   #   kind: "ns.dependency"
   #   meta:
-  #     description: "Agent component"
-  #   component: "wippy/agent"
+  #     description: "LLM component"
+  #   component: "wippy/llm"
   #   version: ">=v0.0.7"
-  #
-  # - name: __dependency.wippy.bootloader
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "Bootloader component"
-  #   component: "wippy/bootloader"
-  #   version: ">=v0.0.7"
-
-  - name: __dependency.wippy.llm
-    kind: "ns.dependency"
-    meta:
-      description: "LLM component"
-    component: "wippy/llm"
-    version: ">=v0.0.7"
-    parameters:
-      - name: "application_host"
-        value: "app:processes"
-
-  # vertex definition
-  - name: application_host
-    # target: wippy.llm.google.vertex:client
-    kind: "ns.definition"
-    targets:
-      - entry: __dependency.wippy.llm
-        path: .parameters[] | select(.name == "application_host") | .value
-
-  # - name: __dependency.wippy.migration
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "Migration component"
-  #   component: "wippy/migration"
-  #   version: ">=v0.0.7"
-
-  # - name: __dependency.wippy.relay
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "Relay component"
-  #   component: "wippy/relay"
-  #   version: ">=v0.0.7"
-  #   values:
+  #   parameters:
   #     - name: "application_host"
   #       value: "app:processes"
 
-  # - name: __dependency.wippy.security
+  # - name: __dependency.wippy.test
   #   kind: "ns.dependency"
   #   meta:
-  #     description: "Security component"
-  #   component: "wippy/security"
+  #     description: "Testing component"
+  #   component: "wippy/test"
   #   version: ">=v0.0.7"
 
-  - name: __dependency.wippy.terminal
+  # Requirements demo dependencies
+  - name: API_ROUTER
+    kind: ns.definition
+    targets:
+      - entry: hello_world_dependency
+        path: .parameters[] | select(.name == "api_router") | .value
+
+  - name: hello_world_dependency
     kind: "ns.dependency"
     meta:
-      description: "Terminal component"
-    component: "wippy/terminal"
-    version: ">=v0.0.7"
+      description: "Requirements demo dependency"
+    component: "igor-test-3/test-2"
+    version: ">=v0.0.1"
+    parameters:
+      - name: api_router
+        value: "app:api"
 
-  - name: __dependency.wippy.test
-    kind: "ns.dependency"
+  # LLM token refresh service override (disabled)
+  # - name: token_refresh.service
+  #   namespace: wippy.llm.google.vertex
+  #   kind: process.service
+  #   meta:
+  #     comment: "Token Refresh Service (disabled override)"
+  #     provider: "vertex"
+  #   host: app:processes
+  #   process: dummy_process  # Dummy process reference
+  #   lifecycle:
+  #     auto_start: false  # Disable auto-start to avoid issues
+  # 
+  # # Dummy process for token_refresh.service override
+  # - name: dummy_process
+  #   namespace: wippy.llm.google.vertex
+  #   kind: process.lua
+  #   meta:
+  #     comment: "Dummy process for token refresh service override"
+  #   source: file://dummy.lua
+  #   method: run
+  #   modules: [ time ]
+
+  ###########################
+  #   Local components      #
+  ###########################
+
+  - name: bapp
+    kind: library.lua
     meta:
-      description: "Testing component"
-    component: "wippy/test"
-    version: ">=v0.0.7"
+      comment: "Bubble Tea app wrapper library"
+    source: file://bapp.lua
+    modules: [ btea, channel, upstream ]
 
-  # - name: __dependency.wippy.usage
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "Usage component"
-  #   component: "wippy/usage"
-  #   version: ">=v0.0.7"
-  #
-  # - name: __dependency.wippy.views
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "Views component"
-  #   component: "wippy/views"
-  #   version: ">=v0.0.7"
-
-
-
-  # ###########################
-  # #   Application entries   #
-  # ###########################
+  ###########################
+  #   Application entries   #
+  ###########################
 
   # app:gateway
   - name: gateway
@@ -128,13 +110,9 @@ entries:
       server: gateway
       depends_on:
         - gateway
-        - heap
     prefix: /api/v1
     timeouts:
       request: 30s
-    # middleware:
-    #   - cors
-    #   - websocket_relay
 
   # app:terminal
   - name: terminal
@@ -164,27 +142,11 @@ entries:
         max_attempts: 3
         backoff_factor: 1.5
 
-  # # app:db
-  # - name: db
-  #   kind: db.sql.sqlite
+  # app:heap (temporarily disabled due to timeout issues)
+  # - name: heap
+  #   kind: memstore.store
   #   meta:
-  #     comment: "Application SQLite database"
-  #   file: "./data/app.db"
+  #     comment: "In-memory data store"
   #   lifecycle:
   #     auto_start: true
-  #
-  # # app:envmemory
-  # - name: envmemory
-  #   kind: env.storagememory
-  #   meta:
-  #     type: envstorage
-  #     comment: Memory storage for environment variables
-  #
-  # # app:envfile
-  # - name: envfile
-  #   kind: env.storagefile
-  #   meta:
-  #     type: envstorage
-  #     comment: Memory storage for environment variables
-  #   file_path: "./app/env/.env.sample"
 
