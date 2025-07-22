@@ -21,7 +21,7 @@ local function handler()
     })
 
     if not ok then
-        res:set_status(http.STATUS.INTERNAL_ERROR)
+        res:set_status(500)  -- Use numeric status codes
         res:write_json({
             error = "Failed to contact session manager"
         })
@@ -36,7 +36,7 @@ local function handler()
     })
 
     if result.channel == timeout then
-        res:set_status(http.STATUS.INTERNAL_ERROR)
+        res:set_status(500)
         res:write_json({
             error = "Session creation timeout"
         })
@@ -46,7 +46,7 @@ local function handler()
     -- raw payload access via data, can be forwarded
     local response = result.value:payload():data()
     if response.status ~= "ok" then
-        res:set_status(http.STATUS.INTERNAL_ERROR)
+        res:set_status(500)
         res:write_json({
             error = response.error or "Session creation failed"
         })
@@ -56,14 +56,14 @@ local function handler()
     -- Encrypt and return the session PID
     local encrypted_token, err = encryption.encrypt_session_pid(response.session_pid)
     if err then
-        res:set_status(http.STATUS.INTERNAL_ERROR)
+        res:set_status(500)
         res:write_json({
             error = "Failed to secure session: " .. err
         })
         return
     end
 
-    res:set_content_type(http.CONTENT.JSON)
+    res:set_content_type("application/json")
     res:write_json({
         session = encrypted_token
     })

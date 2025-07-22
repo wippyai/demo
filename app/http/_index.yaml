@@ -105,6 +105,25 @@ entries:
     path: /registry/dump
     func: registry_dump
 
+  - name: test_llm
+    kind: function.lua
+    meta:
+      comment: "Test endpoint for LLM integration"
+      depends_on: [ app.funcs.openai:llm_query ]
+    source: file://test_llm.lua
+    method: handler
+    modules: [ http, json, funcs ]
+    pool:
+      size: 2
+
+  - name: test_llm.endpoint
+    kind: http.endpoint
+    meta:
+      comment: "Test LLM integration"
+    method: GET
+    path: /llm/test
+    func: test_llm
+
   # Temporarily disabled due to wippy.llm dependency issues
   # - name: list_tools
   #   kind: function.lua

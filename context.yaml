@@ -1,0 +1,29 @@
+$schema: 'https://raw.githubusercontent.com/context-hub/generator/refs/heads/main/json-schema.json'
+documents:
+  - description: 'Project structure overview'
+    outputPath: project-structure.md
+    overwrite: true
+    sources:
+      -
+        type: tree
+        sourcePaths:
+          - src
+        filePattern: '*'
+        renderFormat: ascii
+        enabled: true
+        showCharCount: true
+
+  # Modules API
+  - description: 'Documentation'
+    outputPath: docs.md
+    overwrite: true
+    sources:
+      - type: file
+        sourcePaths: [ '.wippy' ]
+        filePattern: '*.md'
+        modifiers:
+          - name: php-content-filter
+            options:
+              method_visibility:
+                - public
+              keep_method_bodies: false

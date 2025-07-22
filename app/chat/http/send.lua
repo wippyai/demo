@@ -12,7 +12,7 @@ local function handler()
     -- Get encrypted session token
     local encrypted_token = req:query("session")
     if not encrypted_token then
-        res:set_status(http.STATUS.BAD_REQUEST)
+        res:set_status(400)
         res:write_json({
             error = "Missing required 'session' parameter"
         })
@@ -22,7 +22,7 @@ local function handler()
     -- Get message text
     local message = req:query("message")
     if not message then
-        res:set_status(http.STATUS.BAD_REQUEST)
+        res:set_status(400)
         res:write_json({
             error = "Missing required 'message' parameter"
         })
@@ -32,7 +32,7 @@ local function handler()
     -- Decrypt and validate session token
     local session_pid, err = encryption.decrypt_session_pid(encrypted_token)
     if err then
-        res:set_status(http.STATUS.BAD_REQUEST)
+        res:set_status(400)
         res:write_json({
             error = err
         })
@@ -49,7 +49,7 @@ local function handler()
     })
 
     if not ok then
-        res:set_status(http.STATUS.INTERNAL_ERROR)
+        res:set_status(500)
         res:write_json({
             error = "Failed to send message to session"
         })
@@ -57,8 +57,8 @@ local function handler()
     end
 
     -- Set up streaming response
-    res:set_transfer(http.TRANSFER.CHUNKED)
-    res:set_content_type(http.CONTENT.JSON)
+    res:set_transfer("chunked")  -- Use string instead of constant
+    res:set_content_type("application/json")
 
     -- Stream responses until completion flag
     while true do

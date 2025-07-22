@@ -49,6 +49,42 @@ entries:
     path: /chat/message
     func: session.send
 
+  - name: chat.ui
+    kind: function.lua
+    meta:
+      comment: "Web interface for chat"
+    source: file://chat_ui.lua
+    method: handler
+    modules: [ "http" ]
+    pool:
+      size: 2
+
+  - name: chat.ui.endpoint
+    kind: http.endpoint
+    meta:
+      comment: "Chat web interface"
+    method: GET
+    path: /chat
+    func: chat.ui
+
+  - name: simple.ui
+    kind: function.lua
+    meta:
+      comment: "Simple web interface for chat debugging"
+    source: file://simple_ui.lua
+    method: handler
+    modules: [ "http" ]
+    pool:
+      size: 2
+
+  - name: simple.ui.endpoint
+    kind: http.endpoint
+    meta:
+      comment: "Simple chat web interface for testing"
+    method: GET
+    path: /chat/simple
+    func: simple.ui
+
   # - name: session.cancel
   #   kind: function.lua
   #   meta:
