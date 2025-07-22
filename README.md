@@ -31,6 +31,25 @@ The demo application includes:
 - **Chat system** - A session-based chat system with encryption
 - **Snake game** - A terminal-based Snake game using Bubble Tea
 - **Process management** - Actor-based process management with lifecycle controls
+- **LLM integration** - Google Vertex AI integration with token refresh
+- **Environment management** - Secure environment variable handling
+- **Security components** - Security groups and access controls
+- **Migration tools** - Data migration utilities
+- **Usage tracking** - Application usage monitoring
+
+## Current Status
+
+### ✅ Working Components
+- HTTP Gateway service (`:8082`)
+- Process host with lifecycle management
+- Terminal host for Bubble Tea applications
+- Environment variable management
+- LLM integration with Vertex AI
+- Local Bubble Tea wrapper library (`bapp.lua`)
+
+### ⚠️ Known Issues
+- **Actor test dependency issue**: The `wippy.actor:actor_test` function fails to start due to missing `wippy.test:test` dependency
+- **Environment variable cleanup**: Some environment variables are being deleted during startup (this is expected behavior but generates warnings)
 
 ## Configuration Fixes Applied
 
@@ -40,7 +59,7 @@ The following issues were identified and fixed:
 - **Fixed**: Removed incorrect `wippy.lib` dependency that was trying to fetch a non-existent remote module
 - **Fixed**: Added local `bapp` component for Bubble Tea applications
 - **Fixed**: Corrected `wippy.test` reference to use proper namespace
-- **Fixed**: Added missing `heap` service (in-memory store)
+- **Fixed**: Added missing `cache` service (in-memory store)
 
 ### 2. Namespace Issues
 - **Fixed**: Updated snake game to use local `app:bapp` component instead of remote dependency
@@ -53,6 +72,11 @@ The following issues were identified and fixed:
 ### 4. Service Dependencies
 - **Fixed**: Added proper dependency chain for services
 - **Fixed**: Corrected service host references
+
+### 5. Environment Management
+- **Added**: Secure environment variable storage with `.env` file support
+- **Added**: Vertex AI configuration variables
+- **Added**: Environment variable lifecycle management
 
 ## Available Endpoints
 
@@ -84,7 +108,11 @@ The following issues were identified and fixed:
 - **api** - API router for v1 endpoints
 - **terminal** - Terminal host for Bubble Tea apps
 - **processes** - Process execution host
-- **heap** - In-memory data store
+- **cache** - In-memory data store
+
+### Environment Services
+- **envfile** - Environment variable storage
+- **VERTEX_AI_*** - Vertex AI configuration variables
 
 ### Chat Services
 - **session_manager.service** - Manages chat sessions
@@ -95,6 +123,16 @@ The following issues were identified and fixed:
 - **game.service** - Snake game service
 - **game** - Snake game process
 
+### LLM Services
+- **token_refresh** - Vertex AI token refresh process
+- **token_refresh.service** - Token refresh service
+
+### New Components
+- **security** - Security groups and access controls
+- **migration** - Data migration utilities
+- **usage** - Application usage monitoring
+- **llm** - LLM integration components
+
 ## Running the Demo
 
 ### Prerequisites
@@ -104,7 +142,17 @@ The following issues were identified and fixed:
    go build -o bin/runner cmd/runner/main.go
    ```
 
-2. **Start the runtime** with the demo application:
+2. **Set up environment variables** (optional):
+   ```bash
+   # Create .env file with Vertex AI credentials
+   VERTEX_AI_PROJECT=your-project-id
+   VERTEX_AI_LOCATION=us-central1
+   VERTEX_AI_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+   VERTEX_AI_PRIVATE_KEY_ID=your-private-key-id
+   VERTEX_AI_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+   ```
+
+3. **Start the runtime** with the demo application:
    ```bash
    # From the runtime directory
    ./bin/runner ../demo/app
@@ -165,6 +213,10 @@ The following issues were identified and fixed:
 - `app.http.handlers` - HTTP endpoint handlers
 - `app.service.chat` - Chat service components
 - `app.snake` - Snake game components
+- `app.security` - Security components
+- `app.migration` - Migration utilities
+- `app.usage` - Usage tracking
+- `app.llm` - LLM integration
 
 ### Dependencies
 - `wippy.actor` - Actor pattern library
@@ -177,6 +229,7 @@ The demo uses the actor pattern for process management:
 - **Session Manager** - Manages chat session lifecycle
 - **Session Processes** - Individual chat sessions
 - **Game Process** - Snake game running in terminal
+- **Token Refresh Process** - Manages Vertex AI authentication
 
 ## Troubleshooting
 
@@ -197,6 +250,14 @@ The demo uses the actor pattern for process management:
    - The demo now uses local components instead of remote dependencies
    - All required components are included in the demo directory
 
+5. **Actor test failures**:
+   - The `wippy.actor:actor_test` function currently fails due to missing test dependency
+   - This is a known issue and doesn't affect core functionality
+
+6. **Environment variable warnings**:
+   - Warnings about `env.variabledelete` events are expected during startup
+   - These are part of the environment variable lifecycle management
+
 ### Validation
 
 The demo configuration has been tested and validated:
@@ -204,6 +265,8 @@ The demo configuration has been tested and validated:
 - ✅ All dependencies are properly resolved
 - ✅ All services start successfully
 - ✅ All HTTP endpoints are functional
+- ✅ Environment variable management works correctly
+- ⚠️ Actor test function has dependency issues (non-critical)
 
 ## Development
 
@@ -219,6 +282,12 @@ The demo configuration has been tested and validated:
 2. Add `_index.yaml` with service configuration
 3. Update dependencies in main `app/_index.yaml`
 
+### Adding New Components
+
+1. Create a new directory under `app/`
+2. Add `_index.yaml` with component configuration
+3. Update dependencies in main `app/_index.yaml`
+
 ### Testing
 
 The demo includes test endpoints that can be used to verify functionality:
@@ -226,3 +295,29 @@ The demo includes test endpoints that can be used to verify functionality:
 - `GET /api/v1/pid` - Process ID test
 - `GET /api/v1/time/local` - Time service test
 - `GET /api/v1/registry/dump` - Registry access test
+
+### Environment Variables
+
+The demo supports secure environment variable management:
+- Variables are stored in `.env` file
+- Sensitive data is properly handled
+- Vertex AI integration requires proper credentials
+
+## Recent Updates
+
+### Latest Changes
+- Added comprehensive environment variable management
+- Integrated Vertex AI LLM services
+- Added security, migration, and usage components
+- Improved Bubble Tea wrapper library (`bapp.lua`)
+- Enhanced error handling and logging
+
+### Known Issues
+- Actor test function dependency issue (non-critical)
+- Environment variable cleanup warnings (expected behavior)
+
+### Next Steps
+- Resolve actor test dependency issues
+- Add more comprehensive testing
+- Enhance security features
+- Improve error handling
