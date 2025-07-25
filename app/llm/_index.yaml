@@ -21,28 +21,3 @@ entries:
     targets:
       - entry: __dependency.wippy.llm
         path: .parameters[] | select(.name == "host") | .value
-
-  ###########################
-  #   Function entries      #
-  ###########################
-
-  - name: openai
-    kind: library.lua
-    meta:
-      comment: "OpenAI LLM integration for chat sessions"
-    source: file://openai.lua
-    modules: [ "json" ]
-    imports:
-      llm: wippy.llm:llm
-      prompt: wippy.llm:prompt
-
-  - name: openai.llm_query
-    kind: function.lua
-    meta:
-      comment: "LLM query function for chat integration"
-    source: file://openai.lua
-    method: llm_query
-    modules: [ "json" ]
-    imports:
-      llm: wippy.llm:llm
-      prompt: wippy.llm:prompt
