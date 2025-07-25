@@ -20,6 +20,13 @@ function App()
     app.is_streaming = false     -- Is LLM currently streaming
     app.scroll_offset = 0        -- For scrolling through messages
     app.max_visible_lines = 20   -- Maximum visible message lines
+    
+    -- Model selection state
+    app.model_selection_mode = false  -- Are we in model selection mode
+    app.available_models = {}         -- List of available models
+    app.selected_model = "claude-3-5-haiku"  -- Current selected model
+    app.model_selection_index = 1     -- Index in model list
+    app.models_loaded = false         -- Have we loaded models yet
 
     -- Setup key bindings
     app.keys = bapp.create_keys({
@@ -42,6 +49,10 @@ function App()
         quit = {
             keys = { "ctrl+c", "esc" },
             help = { key = "^C/esc", desc = "quit" }
+        },
+        model_select = {
+            keys = { "m", "f2" },
+            help = { key = "m/F2", desc = "select model" }
         },
         backspace = {
             keys = { "backspace" },
@@ -106,7 +117,29 @@ function App()
 
         status = btea.style()
             :foreground("#F38BA8")
-            :italic()
+            :italic(),
+
+        model_selector = btea.style()
+            :border(btea.borders.ROUNDED)
+            :padding(1)
+            :foreground("#CDD6F4")
+            :background("#181825")
+            :border_foreground("#F9E2AF"),
+
+        model_item = btea.style()
+            :foreground("#CDD6F4")
+            :padding(0, 1),
+
+        model_item_selected = btea.style()
+            :foreground("#1E1E2E")
+            :background("#A6E3A1")
+            :bold()
+            :padding(0, 1),
+
+        model_header = btea.style()
+            :foreground("#F9E2AF")
+            :bold()
+            :padding(0, 1)
     }
 
     -- Helper functions
@@ -167,9 +200,9 @@ function App()
             -- Add current user message
             builder:add_user(user_message)
 
-            -- Call LLM with streaming
+            -- Call LLM with streaming using selected model
             local response = llm.generate(builder, {
-                model = "claude-3-5-haiku", -- You can make this configurable
+                model = self.selected_model,
                 temperature = 0.7,
                 max_tokens = 1000,
                 stream = {
@@ -232,13 +265,88 @@ function App()
         end
     end
 
+    function app:load_available_models()
+        if self.models_loaded then
+            return
+        end
+        
+        coroutine.spawn(function()
+            -- Get models with generation capability
+            local models = llm.available_models(llm.CAPABILITY.GENERATE)
+            if models and #models > 0 then
+                self.available_models = models
+                
+                -- Find current model index
+                for i, model in ipairs(models) do
+                    if model.name == self.selected_model then
+                        self.model_selection_index = i
+                        break
+                    end
+                end
+                
+                self.models_loaded = true
+                self:upstream("models_loaded")
+            else
+                -- Fallback to default if no models found
+                self.available_models = {{
+                    name = "claude-3-5-haiku",
+                    title = "Claude 3.5 Haiku",
+                    comment = "Default model"
+                }}
+                self.models_loaded = true
+                self:upstream("models_loaded")
+            end
+        end)
+    end
+
+    function app:toggle_model_selection()
+        if self.is_streaming then
+            return -- Don't allow model selection while streaming
+        end
+        
+        if not self.models_loaded then
+            self:load_available_models()
+        end
+        
+        self.model_selection_mode = not self.model_selection_mode
+        if self.model_selection_mode then
+            self.input_mode = false
+        else
+            self.input_mode = true
+        end
+    end
+
+    function app:navigate_model_selection(direction)
+        if not self.model_selection_mode or #self.available_models == 0 then
+            return
+        end
+        
+        if direction == "up" then
+            self.model_selection_index = math.max(1, self.model_selection_index - 1)
+        elseif direction == "down" then
+            self.model_selection_index = math.min(#self.available_models, self.model_selection_index + 1)
+        end
+    end
+
+    function app:select_current_model()
+        if not self.model_selection_mode or #self.available_models == 0 then
+            return
+        end
+        
+        local selected = self.available_models[self.model_selection_index]
+        if selected then
+            self.selected_model = selected.name
+            self:toggle_model_selection() -- Close model selection
+        end
+    end
+
     -- Add welcome message
     app:add_message("assistant", "Hello! I'm your AI assistant. How can I help you today?")
 
     -- Update handler
     local function update(self, msg)
-        if msg.string == "stream_update" or msg.string == "stream_complete" then
-            -- Just trigger re-render for streaming updates
+        if msg.string == "stream_update" or msg.string == "stream_complete" or msg.string == "models_loaded" then
+            -- Just trigger re-render for streaming updates and model loading
             return false
         elseif msg.topic == "llm_stream" then
             -- Handle LLM streaming response
@@ -247,19 +355,35 @@ function App()
         elseif msg.key then
             if self.keys.quit:matches(msg) then
                 return true -- signal quit
-            elseif self.keys.send:matches(msg) then
-                self:send_message()
-            elseif self.keys.clear:matches(msg) then
-                self:clear_chat()
-            elseif self.keys.scroll_up:matches(msg) then
-                self:scroll_messages("up")
-            elseif self.keys.scroll_down:matches(msg) then
-                self:scroll_messages("down")
-            elseif self.keys.backspace:matches(msg) then
-                self:handle_backspace()
-            elseif msg.key.key_type == "runes" and msg.key.runes then
-                -- Handle regular character input
-                self:handle_char_input(msg.key.runes)
+            elseif self.model_selection_mode then
+                -- Handle model selection navigation
+                if self.keys.model_select:matches(msg) or msg.key.key == "escape" then
+                    self:toggle_model_selection()
+                elseif self.keys.send:matches(msg) then
+                    self:select_current_model()
+                elseif self.keys.scroll_up:matches(msg) or msg.key.key == "up" then
+                    self:navigate_model_selection("up")
+                elseif self.keys.scroll_down:matches(msg) or msg.key.key == "down" then
+                    self:navigate_model_selection("down")
+                end
+            else
+                -- Normal chat mode
+                if self.keys.model_select:matches(msg) then
+                    self:toggle_model_selection()
+                elseif self.keys.send:matches(msg) then
+                    self:send_message()
+                elseif self.keys.clear:matches(msg) then
+                    self:clear_chat()
+                elseif self.keys.scroll_up:matches(msg) then
+                    self:scroll_messages("up")
+                elseif self.keys.scroll_down:matches(msg) then
+                    self:scroll_messages("down")
+                elseif self.keys.backspace:matches(msg) then
+                    self:handle_backspace()
+                elseif msg.key.key_type == "runes" and msg.key.runes then
+                    -- Handle regular character input
+                    self:handle_char_input(msg.key.runes)
+                end
             end
         end
         return false -- continue running
@@ -269,9 +393,51 @@ function App()
     local function view(self)
         local content = {}
 
-        -- Header
-        table.insert(content, self.styles.header:render("AI Chat Assistant"))
+        -- Header with current model
+        local header_text = "AI Chat Assistant"
+        if self.selected_model then
+            header_text = header_text .. " (" .. self.selected_model .. ")"
+        end
+        table.insert(content, self.styles.header:render(header_text))
         table.insert(content, "")
+
+        -- Model selection overlay
+        if self.model_selection_mode then
+            local model_content = {}
+            table.insert(model_content, self.styles.model_header:render("Select LLM Model:"))
+            table.insert(model_content, "")
+            
+            if #self.available_models == 0 then
+                table.insert(model_content, self.styles.model_item:render("Loading models..."))
+            else
+                for i, model in ipairs(self.available_models) do
+                    local model_text = model.name
+                    if model.title and model.title ~= model.name then
+                        model_text = model_text .. " (" .. model.title .. ")"
+                    end
+                    if model.comment then
+                        model_text = model_text .. " - " .. model.comment
+                    end
+                    
+                    local style = (i == self.model_selection_index) and 
+                                  self.styles.model_item_selected or 
+                                  self.styles.model_item
+                    
+                    local prefix = (i == self.model_selection_index) and "▶ " or "  "
+                    table.insert(model_content, style:render(prefix .. model_text))
+                end
+            end
+            
+            table.insert(model_content, "")
+            table.insert(model_content, self.styles.help:render("↑/↓: navigate  |  enter: select  |  esc/m: cancel"))
+            
+            local model_selector = self.styles.model_selector
+                :width(math.min(80, self.window.width - 4))
+                :height(math.min(#model_content + 4, self.window.height - 4))
+                :render(table.concat(model_content, "\n"))
+            
+            return model_selector
+        end
 
         -- Chat messages area
         local chat_lines = {}
@@ -323,7 +489,7 @@ function App()
         if self.is_streaming then
             help_text = "^C/esc: quit"
         else
-            help_text = "enter: send  |  ^L: clear  |  PgUp/PgDn: scroll  |  ^C/esc: quit"
+            help_text = "enter: send  |  m: model  |  ^L: clear  |  PgUp/PgDn: scroll  |  ^C/esc: quit"
         end
         table.insert(content, self.styles.help:render(help_text))
 

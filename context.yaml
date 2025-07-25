@@ -7,7 +7,7 @@ documents:
       -
         type: tree
         sourcePaths:
-          - src
+          - app
         filePattern: '*'
         renderFormat: ascii
         enabled: true
