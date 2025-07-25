@@ -57,6 +57,18 @@ function App()
         backspace = {
             keys = { "backspace" },
             help = { key = "⌫", desc = "delete char" }
+        },
+        nav_up = {
+            keys = { "up" },
+            help = { key = "↑", desc = "navigate up" }
+        },
+        nav_down = {
+            keys = { "down" },
+            help = { key = "↓", desc = "navigate down" }
+        },
+        escape = {
+            keys = { "escape" },
+            help = { key = "esc", desc = "cancel" }
         }
     })
 
@@ -353,19 +365,19 @@ function App()
             self:handle_llm_stream(msg.payload)
             return false
         elseif msg.key then
-            if self.keys.quit:matches(msg) then
-                return true -- signal quit
-            elseif self.model_selection_mode then
+            if self.model_selection_mode then
                 -- Handle model selection navigation
-                if self.keys.model_select:matches(msg) or msg.key.key == "escape" then
+                if self.keys.model_select:matches(msg) or self.keys.escape:matches(msg) then
                     self:toggle_model_selection()
                 elseif self.keys.send:matches(msg) then
                     self:select_current_model()
-                elseif self.keys.scroll_up:matches(msg) or msg.key.key == "up" then
+                elseif self.keys.nav_up:matches(msg) or self.keys.scroll_up:matches(msg) then
                     self:navigate_model_selection("up")
-                elseif self.keys.scroll_down:matches(msg) or msg.key.key == "down" then
+                elseif self.keys.nav_down:matches(msg) or self.keys.scroll_down:matches(msg) then
                     self:navigate_model_selection("down")
                 end
+            elseif self.keys.quit:matches(msg) then
+                return true -- signal quit
             else
                 -- Normal chat mode
                 if self.keys.model_select:matches(msg) then
