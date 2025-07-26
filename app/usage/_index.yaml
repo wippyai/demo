@@ -1,0 +1,10 @@
+version: "1.0"
+namespace: app.llm
+
+entries:
+  - name: __dependency.wippy.usage
+    kind: "ns.dependency"
+    meta:
+      description: "Usage component"
+    component: "wippy/usage"
+    version: ">=v0.0.7"

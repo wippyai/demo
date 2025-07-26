@@ -1,100 +1,19 @@
 version: "1.0"
 namespace: app
 
+meta:
+  depends_on: [ ns:system ]
+  comment: "Application namespace configuration"
+
 entries:
-  ###########################
-  #   Dependency entries    #
-  ###########################
-
-  - name: __dependency.wippy.actor
-    kind: "ns.dependency"
+  # app:processes
+  - name: processes
+    kind: process.host
     meta:
-      description: "Actor component"
-    component: "wippy/actor"
-    version: ">=v0.0.8"
-
-  # Temporarily disabled due to token_refresh.service host configuration issue
-  # - name: __dependency.wippy.llm
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "LLM component"
-  #   component: "wippy/llm"
-  #   version: ">=v0.0.7"
-  #   parameters:
-  #     - name: "application_host"
-  #       value: "app:processes"
-
-  # - name: __dependency.wippy.test
-  #   kind: "ns.dependency"
-  #   meta:
-  #     description: "Testing component"
-  #   component: "wippy/test"
-  #   version: ">=v0.0.7"
-
-  # Requirements demo dependencies
-  - name: API_ROUTER
-    kind: ns.definition
-    targets:
-      - entry: hello_world_dependency
-        path: .parameters[] | select(.name == "api_router") | .value
-
-  - name: hello_world_dependency
-    kind: "ns.dependency"
-    meta:
-      description: "Requirements demo dependency"
-    component: "igor-test-3/test-2"
-    version: ">=v0.0.1"
-    parameters:
-      - name: api_router
-        value: "app:api"
-
-  # LLM token refresh service override (disabled)
-  # - name: token_refresh.service
-  #   namespace: wippy.llm.google.vertex
-  #   kind: process.service
-  #   meta:
-  #     comment: "Token Refresh Service (disabled override)"
-  #     provider: "vertex"
-  #   host: app:processes
-  #   process: dummy_process  # Dummy process reference
-  #   lifecycle:
-  #     auto_start: false  # Disable auto-start to avoid issues
-  # 
-  # # Dummy process for token_refresh.service override
-  # - name: dummy_process
-  #   namespace: wippy.llm.google.vertex
-  #   kind: process.lua
-  #   meta:
-  #     comment: "Dummy process for token refresh service override"
-  #   source: file://dummy.lua
-  #   method: run
-  #   modules: [ time ]
-
-  ###########################
-  #   Local components      #
-  ###########################
-
-  - name: bapp
-    kind: library.lua
-    meta:
-      comment: "Bubble Tea app wrapper library"
-    source: file://bapp.lua
-    modules: [ btea, channel, upstream ]
-
-  ###########################
-  #   Application entries   #
-  ###########################
-
-  # app:gateway
-  - name: gateway
-    kind: http.service
-    meta:
-      comment: "Main HTTP gateway service"
-    addr: ":8082"
-    timeouts:
-      idle: 60s
-      read: 30s
-      write: 30s
+      comment: "Process execution host"
+    host:
+      workers: 32
+      max_processes: 20000
     lifecycle:
       auto_start: true
       restart:
@@ -114,6 +33,86 @@ entries:
     timeouts:
       request: 30s
 
+  - name: gateway
+    kind: http.service
+    meta:
+      comment: "Main HTTP gateway service"
+    addr: ":8082"
+    timeouts:
+      idle: 60s
+      read: 30s
+      write: 30s
+    lifecycle:
+      auto_start: true
+      restart:
+        initial_delay: 5s
+        max_attempts: 3
+        backoff_factor: 1.5
+
+  - name: envfile
+    kind: env.storagefile
+    meta:
+      type: envstorage
+      comment: Memory storage for environment variables
+    file_path: "./.env"
+
+  - name: VERTEX_AI_PRIVATE_KEY_ID
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: VERTEX_AI_PRIVATE_KEY_ID
+    storage: app:envfile
+    default:
+
+  - name: VERTEX_AI_CLIENT_EMAIL
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: VERTEX_AI_CLIENT_EMAIL
+    storage: app:envfile
+    default:
+
+  - name: VERTEX_AI_PRIVATE_KEY
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: VERTEX_AI_PRIVATE_KEY
+    storage: app:envfile
+    default:
+
+  - name: VERTEX_AI_PROJECT
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: VERTEX_AI_PROJECT
+    storage: app:envfile
+    default:
+
+  - name: VERTEX_AI_LOCATION
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: VERTEX_AI_LOCATION
+    storage: app:envfile
+    default:
+
+  - name: bapp
+    kind: library.lua
+    meta:
+      comment: "Bubble Tea app wrapper library"
+    source: file://bapp.lua
+    modules: [ btea, channel, upstream ]
+
   # app:terminal
   - name: terminal
     kind: terminal.host
@@ -127,26 +126,32 @@ entries:
         max_attempts: 3
         backoff_factor: 1.5
 
-  # app:processes
-  - name: processes
-    kind: process.host
+  - name: cache
+    kind: store.memory
     meta:
-      comment: "Process execution host"
-    host:
-      workers: 32
-      max_processes: 20000
+      comment: "Application cache storage"
+    max_size: 10000
+    cleanup_interval: 30m
     lifecycle:
       auto_start: true
-      restart:
-        initial_delay: 5s
-        max_attempts: 3
-        backoff_factor: 1.5
+  ###########################
+  #   Local components      #
+  ###########################
 
-  # app:heap (temporarily disabled due to timeout issues)
-  # - name: heap
-  #   kind: memstore.store
-  #   meta:
-  #     comment: "In-memory data store"
-  #   lifecycle:
-  #     auto_start: true
+  #  - name: __dependency.wippy.relay
+  #    kind: "ns.dependency"
+  #    meta:
+  #     description: "Relay component"
+  #    component: "wippy/relay"
+  #    version: ">=v0.0.7"
+  #    parameters:
+  #     - name: "application_host"
+  #       value: "system:processes"
+
+#  - name: __dependency.wippy.views
+#    kind: "ns.dependency"
+#    meta:
+#     description: "Views component"
+#    component: "wippy/views"
+#    version: ">=v0.0.7"
 

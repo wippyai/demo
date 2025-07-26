@@ -1,0 +1,10 @@
+version: "1.0"
+namespace: app.llm
+
+entries:
+  - name: __dependency.wippy.test
+    kind: "ns.dependency"
+    meta:
+      description: "Testing component"
+    component: "wippy/test"
+    version: ">=v0.0.7"

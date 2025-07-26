@@ -1,0 +1,15 @@
+version: "1.0"
+namespace: app.actor
+
+entries:
+  ###########################
+  #   Dependency entries    #
+  ###########################
+
+  - name: __dependency.wippy.actor
+    kind: "ns.dependency"
+    meta:
+      description: "Actor component"
+    component: "wippy/actor"
+    version: ">=v0.0.8"
+
