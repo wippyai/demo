@@ -1,0 +1,10 @@
+version: "1.0"
+namespace: app.security
+
+entries:
+  - name: __dependency.wippy.security
+    kind: "ns.dependency"
+    meta:
+      description: "Security component"
+    component: "wippy/security"
+    version: ">=v0.0.7"

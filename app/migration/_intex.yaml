@@ -1,0 +1,11 @@
+version: "1.0"
+namespace: app.migration
+
+entries:
+  - name: __dependency.wippy.migration
+    kind: "ns.dependency"
+    meta:
+      description: "Migration component"
+    component: "wippy/migration"
+    version: ">=v0.0.7"
+
