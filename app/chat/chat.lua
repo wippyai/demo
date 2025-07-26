@@ -2,6 +2,7 @@ local time = require("time")
 local bapp = require("bapp")
 local llm = require("llm")
 local prompt = require("prompt")
+local json = require("json")
 
 function App()
     -- Create app with custom init commands
@@ -28,6 +29,9 @@ function App()
     app.model_selection_index = 1     -- Index in model list
     app.models_loaded = false         -- Have we loaded models yet
 
+    -- Setup streaming event listener
+    app.llm_stream_channel = process.listen("llm_stream")
+
     -- Setup key bindings
     app.keys = bapp.create_keys({
         send = {
@@ -47,12 +51,12 @@ function App()
             help = { key = "PgDn/^D", desc = "scroll down" }
         },
         quit = {
-            keys = { "ctrl+c", "esc" },
-            help = { key = "^C/esc", desc = "quit" }
+            keys = { "ctrl+x" },
+            help = { key = "^X", desc = "quit" }
         },
         model_select = {
-            keys = { "m", "f2" },
-            help = { key = "m/F2", desc = "select model" }
+            keys = { "ctrl+t" },
+            help = { key = "^T", desc = "select model" }
         },
         backspace = {
             keys = { "backspace" },
@@ -111,6 +115,14 @@ function App()
         streaming_message = btea.style()
             :foreground("#89B4FA")
             :italic(),
+
+        system_message = btea.style()
+            :foreground("#F38BA8")
+            :italic(),
+
+        system_prefix = btea.style()
+            :foreground("#F38BA8")
+            :bold(),
 
         input_area = btea.style()
             :border(btea.borders.NORMAL)
@@ -174,29 +186,42 @@ function App()
     end
 
     function app:send_message()
+        print("send_message called with input: '" .. self.current_input .. "'")
+        
         if self.current_input == "" or self.is_streaming then
+            print("send_message aborted - empty input or already streaming")
             return
         end
 
         local user_message = self.current_input
         self.current_input = ""
+        
+        print("Processing message: " .. user_message)
 
         -- Add user message to history
         self:add_message("user", user_message)
+        print("Added user message to history")
 
         -- Start streaming response
         self.is_streaming = true
         self.streaming_response = ""
+        print("Set streaming state to true")
 
         -- Send to LLM (this would be implemented based on your LLM setup)
         self:send_to_llm(user_message)
+        print("Called send_to_llm")
     end
 
     function app:send_to_llm(user_message)
+        print("send_to_llm started for message: " .. user_message)
+        
         coroutine.spawn(function()
+            print("Inside coroutine, building prompt...")
+            
             -- Build conversation history for LLM
             local builder = prompt.new()
             builder:add_system("You are a helpful AI assistant. Be concise but informative.")
+            print("Added system message to prompt")
 
             -- Add conversation history (keep last 10 messages for context)
             local start_idx = math.max(1, #self.messages - 10)
@@ -204,15 +229,21 @@ function App()
                 local msg = self.messages[i]
                 if msg.role == "user" then
                     builder:add_user(msg.content)
+                    print("Added user message to context: " .. msg.content)
                 elseif msg.role == "assistant" then
                     builder:add_assistant(msg.content)
+                    print("Added assistant message to context: " .. msg.content)
                 end
             end
 
             -- Add current user message
             builder:add_user(user_message)
+            print("Added current user message to prompt")
+            
+            print("About to call llm.generate with model: " .. self.selected_model)
 
             -- Call LLM with streaming using selected model
+            print("Attempting LLM call with prompt builder...")
             local response = llm.generate(builder, {
                 model = self.selected_model,
                 temperature = 0.7,
@@ -222,37 +253,83 @@ function App()
                     topic = "llm_stream"
                 }
             })
+            print("LLM call completed")
 
-            -- Handle potential errors
-            if response and response.error then
-                self.streaming_response = "Error: " .. (response.error_message or response.error)
-                self:add_message("assistant", self.streaming_response)
+            -- Handle potential errors according to LLM guidelines
+            if not response then
+                local error_msg = "LLM returned nil response. Model '" .. self.selected_model .. "' may not exist or be configured properly."
+                print("LLM nil response error: " .. error_msg)
                 self.streaming_response = ""
                 self.is_streaming = false
+                self:add_message("system", "❌ " .. error_msg)
                 self:upstream("stream_complete")
+            elseif response.error then
+                local error_msg = "LLM Error: " .. (response.error_message or tostring(response.error))
+                print("LLM response error: " .. error_msg)
+                self.streaming_response = ""
+                self.is_streaming = false
+                self:add_message("system", "❌ " .. error_msg)
+                self:upstream("stream_complete")
+            else
+                print("LLM call successful, waiting for streaming responses...")
+                if response.result then
+                    -- Non-streaming response (fallback)
+                    print("Received non-streaming response")
+                    self:add_message("assistant", response.result)
+                    self.streaming_response = ""
+                    self.is_streaming = false
+                    self:upstream("stream_complete")
+                end
             end
         end)
     end
 
     function app:handle_llm_stream(chunk)
+        print("Received streaming chunk - type: " .. type(chunk))
+        if type(chunk) == "table" then
+            local keys = {}
+            for k, _ in pairs(chunk) do
+                table.insert(keys, k)
+            end
+            print("Chunk keys: " .. table.concat(keys, ", "))
+            if chunk.type then
+                print("Chunk type: " .. chunk.type)
+            end
+            if chunk.text then
+                print("Chunk text: '" .. chunk.text .. "'")
+            end
+        end
+        
         if self.is_streaming then
-            if chunk.type == "content" then
-                self.streaming_response = self.streaming_response .. chunk.text
+            if chunk.type == "chunk" then
+                print("Adding chunk content to streaming response")
+                local content = chunk.content or ""
+                self.streaming_response = self.streaming_response .. content
                 self:upstream("stream_update")
+            elseif chunk.type == "thinking" then
+                print("Thinking process: " .. (chunk.content or ""))
+                -- Could show thinking process in UI if desired
             elseif chunk.type == "done" then
+                print("Streaming complete, adding final message")
                 -- Streaming complete
                 self:add_message("assistant", self.streaming_response)
                 self.streaming_response = ""
                 self.is_streaming = false
                 self:upstream("stream_complete")
             elseif chunk.type == "error" then
+                print("Streaming error: " .. (chunk.error and chunk.error.message or "Unknown error"))
                 -- Handle streaming error
-                self.streaming_response = self.streaming_response .. "\n\n[Error: " .. (chunk.error or "Unknown error") .. "]"
+                local error_msg = chunk.error and chunk.error.message or "Unknown error"
+                self.streaming_response = self.streaming_response .. "\n\n[Error: " .. error_msg .. "]"
                 self:add_message("assistant", self.streaming_response)
                 self.streaming_response = ""
                 self.is_streaming = false
                 self:upstream("stream_complete")
+            else
+                print("Unknown chunk type: " .. tostring(chunk.type))
             end
+        else
+            print("Received chunk but not in streaming mode")
         end
     end
 
@@ -283,31 +360,55 @@ function App()
         end
         
         coroutine.spawn(function()
+            print("Loading available models...")
+            
             -- Get models with generation capability
-            local models = llm.available_models(llm.CAPABILITY.GENERATE)
+            local models = llm.available_models("generate")
+            print("Found " .. (models and #models or 0) .. " models")
+            print("Raw models response:", json.encode(models or {}))
+            
+            -- Always provide a good selection of popular models
+            local popular_models = {
+                {name = "claude-3-5-sonnet", title = "Claude 3.5 Sonnet", comment = "High-performance Claude model"},
+                {name = "claude3-haiku", title = "Claude 3.5 Haiku", comment = "Fastest Claude model"},
+                {name = "claude-4-sonnet", title = "Claude 4 Sonnet", comment = "Latest Claude model with thinking"},
+                {name = "gpt-4o", title = "GPT-4o", comment = "Fast, intelligent GPT model"},
+                {name = "gpt-4o-mini", title = "GPT-4o Mini", comment = "Affordable GPT model"},
+                {name = "o3-mini", title = "O3 Mini", comment = "Fast reasoning model"},
+                {name = "gemini-2.5-flash", title = "Gemini 2.5 Flash", comment = "Fast Google model"},
+                {name = "gemini-1.5-pro", title = "Gemini 1.5 Pro", comment = "High-capability Google model"}
+            }
+            
             if models and #models > 0 then
+                print("Using available models from LLM system")
                 self.available_models = models
-                
-                -- Find current model index
+                print("Available models:")
                 for i, model in ipairs(models) do
-                    if model.name == self.selected_model then
-                        self.model_selection_index = i
-                        break
-                    end
+                    print("  " .. i .. ": " .. model.name .. " (" .. (model.title or "no title") .. ")")
                 end
-                
-                self.models_loaded = true
-                self:upstream("models_loaded")
             else
-                -- Fallback to default if no models found
-                self.available_models = {{
-                    name = "claude-3-5-haiku",
-                    title = "Claude 3.5 Haiku",
-                    comment = "Default model"
-                }}
-                self.models_loaded = true
-                self:upstream("models_loaded")
+                print("No configured models found, using popular model list")
+                self.available_models = popular_models
             end
+            
+            -- Find current model index or use first model
+            local found_index = 1
+            for i, model in ipairs(self.available_models) do
+                if model.name == self.selected_model then
+                    found_index = i
+                    break
+                end
+            end
+            self.model_selection_index = found_index
+            
+            -- If our selected model wasn't found, use the first available model
+            if found_index == 1 and self.available_models[1].name ~= self.selected_model then
+                print("Selected model '" .. self.selected_model .. "' not found, using '" .. self.available_models[1].name .. "' instead")
+                self.selected_model = self.available_models[1].name
+            end
+            
+            self.models_loaded = true
+            self:upstream("models_loaded")
         end)
     end
 
@@ -352,19 +453,47 @@ function App()
         end
     end
 
+    -- Load available models immediately on startup
+    app:load_available_models()
+    
     -- Add welcome message
     app:add_message("assistant", "Hello! I'm your AI assistant. How can I help you today?")
 
     -- Update handler
     local function update(self, msg)
+        print("Update called with message type: " .. type(msg))
+        if type(msg) == "table" then
+            local keys = {}
+            for k, _ in pairs(msg) do
+                table.insert(keys, k)
+            end
+            print("Message keys: " .. table.concat(keys, ", "))
+            if msg.string then
+                print("Message string: " .. msg.string)
+            end
+            if msg.topic then
+                print("Message topic: " .. msg.topic)
+            end
+        end
+        
+        -- Check for LLM stream messages using non-blocking select
+        local result = channel.select({
+            self.llm_stream_channel:case_receive(),
+            default = true
+        })
+        
+        if not result.default then
+            print("Received LLM stream message")
+            self:handle_llm_stream(result.value)
+            return false
+        end
+        
         if msg.string == "stream_update" or msg.string == "stream_complete" or msg.string == "models_loaded" then
             -- Just trigger re-render for streaming updates and model loading
             return false
-        elseif msg.topic == "llm_stream" then
-            -- Handle LLM streaming response
-            self:handle_llm_stream(msg.payload)
-            return false
         elseif msg.key then
+            print("Handling key message - key type: " .. tostring(msg.key.key_type))
+            print("Key string: " .. tostring(msg.key.string))
             if self.model_selection_mode then
                 -- Handle model selection navigation
                 if self.keys.model_select:matches(msg) or self.keys.escape:matches(msg) then
@@ -381,6 +510,7 @@ function App()
             else
                 -- Normal chat mode
                 if self.keys.model_select:matches(msg) then
+                    print("Ctrl+T matched! Opening model selection")
                     self:toggle_model_selection()
                 elseif self.keys.send:matches(msg) then
                     self:send_message()
@@ -441,7 +571,7 @@ function App()
             end
             
             table.insert(model_content, "")
-            table.insert(model_content, self.styles.help:render("↑/↓: navigate  |  enter: select  |  esc/m: cancel"))
+            table.insert(model_content, self.styles.help:render("↑/↓: navigate  |  enter: select  |  esc/^T: cancel"))
             
             local model_selector = self.styles.model_selector
                 :width(math.min(80, self.window.width - 4))
@@ -464,6 +594,9 @@ function App()
             if message.role == "user" then
                 table.insert(chat_lines, self.styles.user_prefix:render("You: ") ..
                     self.styles.user_message:render(message.content))
+            elseif message.role == "system" then
+                table.insert(chat_lines, self.styles.system_prefix:render("System: ") ..
+                    self.styles.system_message:render(message.content))
             else
                 table.insert(chat_lines, self.styles.assistant_prefix:render("Assistant: ") ..
                     self.styles.assistant_message:render(message.content))
@@ -499,9 +632,9 @@ function App()
         -- Help text
         local help_text = ""
         if self.is_streaming then
-            help_text = "^C/esc: quit"
+            help_text = "^X: quit"
         else
-            help_text = "enter: send  |  m: model  |  ^L: clear  |  PgUp/PgDn: scroll  |  ^C/esc: quit"
+            help_text = "enter: send  |  ^T: model  |  ^L: clear  |  PgUp/PgDn: scroll  |  ^X: quit"
         end
         table.insert(content, self.styles.help:render(help_text))
 

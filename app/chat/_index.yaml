@@ -11,7 +11,7 @@ entries:
       comment: "AI Chat Client"
     source: file://chat.lua
     method: App
-    modules: [ time, btea, channel, upstream ]
+    modules: [ time, btea, channel, upstream, process ]
     imports:
       bapp: "app:bapp"
       prompt: wippy.llm:prompt
@@ -30,3 +30,11 @@ entries:
         max_attempts: 3
       depends_on:
         - app:terminal
+      security:
+        actor:
+          ID: chat-client
+          Meta:
+            role: llm-user
+            service: chat
+        groups:
+          - wippy.security:process
