@@ -106,6 +106,26 @@ entries:
     storage: app:envfile
     default:
 
+  - name: ANTHROPIC_API_KEY
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: ANTHROPIC_API_KEY
+    storage: app:envfile
+    default:
+
+  - name: OPENAI_API_KEY
+    kind: env.variable
+    meta:
+      type: secret_key
+      depends_on:
+        - app:envfile
+    variable: OPENAI_API_KEY
+    storage: app:envfile
+    default:
+
   - name: bapp
     kind: library.lua
     meta:

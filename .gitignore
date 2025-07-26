@@ -8,6 +8,7 @@
 /node_modules
 /vendor
 /.wippy
+/.context
 
 # Binaries for programs and plugins
 *.exe
