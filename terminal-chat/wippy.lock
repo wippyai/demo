@@ -1,0 +1,22 @@
+directories:
+  modules: .wippy
+  src: .
+modules:
+- name: wippy/actor
+  version: v0.3.0
+  hash: 0199c412-81c8-7a77-9494-e059ebf7e1bd
+- name: wippy/llm
+  version: v0.3.0
+  hash: 0199c412-83c7-7af4-a051-1c899ab9a0a5
+- name: wippy/migration
+  version: v0.3.0
+  hash: 0199c412-8195-7520-b06e-ac36c96d077b
+- name: wippy/security
+  version: v0.3.0
+  hash: 0199c412-831a-78ae-887c-a8949183da0f
+- name: wippy/terminal
+  version: v0.3.0
+  hash: 0199c412-84b8-7526-b729-b9575f7a4ebb
+- name: wippy/test
+  version: v0.3.0
+  hash: 0199c412-8a9e-7571-8f6a-12a3288bead7

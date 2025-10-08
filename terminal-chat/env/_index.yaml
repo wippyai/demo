@@ -1,0 +1,36 @@
+version: "1.0"
+namespace: app.env
+
+meta:
+  depends_on: [ ns:system ]
+  comment: "Application namespace configuration"
+
+entries:
+  # app.env:file
+  - name: file
+    kind: env.storage.file
+    meta:
+      comment: Environment variables from .env file
+    auto_create: true
+    file_path: .env
+    lifecycle:
+      auto_start: true
+
+  # app.env:os
+  - name: os
+    kind: env.storage.os
+    meta:
+      comment: OS environment variables
+    lifecycle:
+      auto_start: true
+
+  # app.env:router
+  - name: router
+    kind: env.storage.router
+    meta:
+      comment: Router storage with file and OS fallback
+    lifecycle:
+      auto_start: true
+    storages:
+      - app.env:file
+      - app.env:os

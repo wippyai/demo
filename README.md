@@ -110,10 +110,6 @@ The following issues were identified and fixed:
 - **processes** - Process execution host
 - **cache** - In-memory data store
 
-### Environment Services
-- **envfile** - Environment variable storage
-- **VERTEX_AI_*** - Vertex AI configuration variables
-
 ### Chat Services
 - **session_manager.service** - Manages chat sessions
 - **session_manager** - Chat session manager process
