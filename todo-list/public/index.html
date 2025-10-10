@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO List - Wippy App</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-5">
+        <!-- Header -->
+        <header class="mb-4">
+            <h1 class="display-4 text-center mb-3">
+                <i class="bi bi-check2-square text-primary"></i>
+                TODO List
+            </h1>
+            <p class="text-center text-muted">Manage your tasks efficiently</p>
+        </header>
+
+        <!-- Statistics -->
+        <div class="row mb-4" id="statistics">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Tasks</h5>
+                        <p class="display-6 mb-0" id="total-count">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Active</h5>
+                        <p class="display-6 mb-0 text-warning" id="active-count">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Completed</h5>
+                        <p class="display-6 mb-0 text-success" id="completed-count">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Todo Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Add New Task</h5>
+                <form id="add-todo-form" hx-post="/api/v1/todos" hx-target="#todos-list" hx-swap="afterbegin" hx-on::after-request="resetForm()">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category" name="category" placeholder="e.g., Work, Personal">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="1">Low</option>
+                                <option value="2" selected>Medium</option>
+                                <option value="3">High</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="due_date" class="form-label">Due Date</label>
+                            <input type="datetime-local" class="form-control" id="due_date" name="due_date">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-plus-circle"></i> Add Task
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Filter by Status</label>
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-primary active" onclick="filterTodos('all')">All</button>
+                            <button type="button" class="btn btn-outline-warning" onclick="filterTodos('active')">Active</button>
+                            <button type="button" class="btn btn-outline-success" onclick="filterTodos('completed')">Completed</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="filter-category" class="form-label">Filter by Category</label>
+                        <input type="text" class="form-control" id="filter-category" placeholder="Enter category">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="filter-priority" class="form-label">Filter by Priority</label>
+                        <select class="form-select" id="filter-priority" onchange="filterTodos()">
+                            <option value="">All Priorities</option>
+                            <option value="1">Low</option>
+                            <option value="2">Medium</option>
+                            <option value="3">High</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Todos List -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Tasks</h5>
+                <div id="todos-list" hx-get="/api/v1/todos" hx-trigger="load" hx-swap="innerHTML">
+                    <!-- Todos will be loaded here -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-todo-form">
+                        <input type="hidden" id="edit-id">
+                        <div class="mb-3">
+                            <label for="edit-title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit-description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="edit-category">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-priority" class="form-label">Priority</label>
+                            <select class="form-select" id="edit-priority">
+                                <option value="1">Low</option>
+                                <option value="2">Medium</option>
+                                <option value="3">High</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-due_date" class="form-label">Due Date</label>
+                            <input type="datetime-local" class="form-control" id="edit-due_date">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Custom JS -->
+    <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+/* Custom styles for TODO List application */
+
+:root {
+    --priority-low: #6c757d;
+    --priority-medium: #ffc107;
+    --priority-high: #dc3545;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Header */
+header h1 {
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+header p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Statistics Cards */
+#statistics .card {
+    background: white;
+}
+
+#statistics .display-6 {
+    font-weight: bold;
+}
+
+/* Todo Item */
+.todo-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.todo-item:last-child {
+    border-bottom: none;
+}
+
+.todo-item:hover {
+    background-color: #f8f9fa;
+}
+
+.todo-item.completed {
+    opacity: 0.7;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+/* Todo Title */
+.todo-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+/* Todo Description */
+.todo-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Priority Badges */
+.priority-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.priority-low {
+    background-color: var(--priority-low);
+    color: white;
+}
+
+.priority-medium {
+    background-color: var(--priority-medium);
+    color: #000;
+}
+
+.priority-high {
+    background-color: var(--priority-high);
+    color: white;
+}
+
+/* Category Badge */
+.category-badge {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Due Date */
+.due-date {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.due-date.overdue {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.due-date.due-soon {
+    color: #ffc107;
+    font-weight: 600;
+}
+
+/* Checkbox */
+.todo-checkbox {
+    width: 1.5rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+/* Action Buttons */
+.todo-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.todo-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #dee2e6;
+}
+
+/* Filter Buttons */
+.btn-group .btn.active {
+    font-weight: 600;
+}
+
+/* Form */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.todo-item {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Loading State */
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+    .todo-actions {
+        flex-direction: column;
+    }
+
+    .todo-actions .btn {
+        width: 100%;
+    }
+}

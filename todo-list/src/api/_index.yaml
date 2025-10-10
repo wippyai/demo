@@ -1,0 +1,141 @@
+version: "1.0"
+namespace: app.api
+
+entries:
+  # GET /api/v1/todos - Get all todos
+  - name: get_todos
+    kind: function.lua
+    meta:
+      comment: Get all todos with optional filters
+      router: app:api
+    source: file://get_todos.lua
+    modules:
+      - http
+      - sql
+    method: handler
+    pool:
+      size: 4
+
+  - name: get_todos_endpoint
+    kind: http.endpoint
+    meta:
+      comment: GET endpoint for all todos
+      router: app:api
+    method: GET
+    path: /todos
+    func: get_todos
+
+  # GET /api/v1/todos/:id - Get single todo
+  - name: get_todo
+    kind: function.lua
+    meta:
+      comment: Get a single todo by ID
+      router: app:api
+    source: file://get_todo.lua
+    modules:
+      - http
+      - sql
+    method: handler
+    pool:
+      size: 4
+
+  - name: get_todo_endpoint
+    kind: http.endpoint
+    meta:
+      comment: GET endpoint for single todo
+      router: app:api
+    method: GET
+    path: /todos/:id
+    func: get_todo
+
+  # POST /api/v1/todos - Create new todo
+  - name: create_todo
+    kind: function.lua
+    meta:
+      comment: Create a new todo
+      router: app:api
+    source: file://create_todo.lua
+    modules:
+      - http
+      - sql
+    method: handler
+    pool:
+      size: 4
+
+  - name: create_todo_endpoint
+    kind: http.endpoint
+    meta:
+      comment: POST endpoint to create todo
+      router: app:api
+    method: POST
+    path: /todos
+    func: create_todo
+
+  # PUT /api/v1/todos/:id - Update todo
+  - name: update_todo
+    kind: function.lua
+    meta:
+      comment: Update an existing todo
+      router: app:api
+    source: file://update_todo.lua
+    modules:
+      - http
+      - sql
+    method: handler
+    pool:
+      size: 4
+
+  - name: update_todo_endpoint
+    kind: http.endpoint
+    meta:
+      comment: PUT endpoint to update todo
+      router: app:api
+    method: PUT
+    path: /todos/:id
+    func: update_todo
+
+  # PATCH /api/v1/todos/:id/toggle - Toggle completed status
+  - name: toggle_todo
+    kind: function.lua
+    meta:
+      comment: Toggle todo completed status
+      router: app:api
+    source: file://toggle_todo.lua
+    modules:
+      - http
+      - sql
+    method: handler
+    pool:
+      size: 4
+
+  - name: toggle_todo_endpoint
+    kind: http.endpoint
+    meta:
+      comment: PATCH endpoint to toggle todo completion
+      router: app:api
+    method: PATCH
+    path: /todos/:id/toggle
+    func: toggle_todo
+
+  # DELETE /api/v1/todos/:id - Delete todo
+  - name: delete_todo
+    kind: function.lua
+    meta:
+      comment: Delete a todo
+      router: app:api
+    source: file://delete_todo.lua
+    modules:
+      - http
+      - sql
+    method: handler
+    pool:
+      size: 4
+
+  - name: delete_todo_endpoint
+    kind: http.endpoint
+    meta:
+      comment: DELETE endpoint to remove todo
+      router: app:api
+    method: DELETE
+    path: /todos/:id
+    func: delete_todo

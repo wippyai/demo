@@ -1,5 +1,6 @@
-/.idea
-/.vscode
+.idea
+.vscode
+.claude
 /runtime
 /dist
 /build
