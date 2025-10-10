@@ -1,0 +1,19 @@
+version: "1.0"
+namespace: app.migrations
+
+entries:
+  # app.migrations:001_create_todos_table
+  - name: 001_create_todos_table
+    kind: function.lua
+    meta:
+      type: migration
+      tags:
+        - todos
+        - database
+      description: Create todos table with indexes for task management
+      target_db: app:db
+      timestamp: "2025-01-15T10:00:00Z"
+    source: file://001_create_todos_table.lua
+    imports:
+      migration: wippy.migration:migration
+    method: migrate
